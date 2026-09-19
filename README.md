@@ -9,16 +9,16 @@ A ddcutil varlink service for control of DDC Monitors/VDUs
 >
 > Non-standard manufacturer specific features should only be experimented with caution, some may have irreversible consequences, including bricking the hardware.
 
-> [!IMPORTANT]
-> This software is still in development and somewhat experimental.
-> 
-> The varlink interface design may change.
-
 > [!Tip]
 > All methods in [varlink/com.ddcutil.service.varlink](varlink/com.ddcutil.service.varlink) have now been implemented.
 > 
 > The [vdu_controls](https://digitaltrails.github.io/vdu_controls/), a control panel for 
-> displays, can be configured to use ddcutil-varlink. 
+> displays, can be configured to use ddcutil-varlink.
+>
+> Development is more or less complete at this point.  Possible future work:
+> - Packaging, probably initially targeting openSUSE Tumbleweed.
+> - Possibly implement a dbus service to replace the existing C based service by
+    >   re-using the backend ddcutil code.
 
 The aim of this service is to make it easier to create highly-responsive widgets 
 and apps for [ddcutil](https://www.ddcutil.com/).   The service is based on [ddcutil-service](https://github.com/digitaltrails/ddcutil-service), a 
