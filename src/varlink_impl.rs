@@ -8,8 +8,9 @@ pub use crate::service::DdcutilService;
 use crossbeam_channel::unbounded;
 use log::{error};
 use std::sync::atomic::Ordering;
+use base64::{engine::general_purpose, Engine as _};
 use varlink::StringHashMap;
-use crate::ddcutil::{InternalEvent, InternalEventKind};
+use crate::ddcutil::{InternalEvent, InternalEventKind, DisplayInfo};
 // ============================================================================
 // Varlink Interface Implementation
 // ============================================================================
@@ -24,6 +25,21 @@ macro_rules! debug_varlink_call {
     }};
 }
 
+fn to_detect_entry(info: DisplayInfo) -> DetectEntry {
+    DetectEntry {
+        display_ref: info.display_ref as i64,
+        display_number: info.display_number as i64,
+        usb_bus: info.usb_bus as i64,
+        usb_device: info.usb_device as i64,
+        mfg_id: info.manufacturer_id.clone(),
+        model_name: info.model_name.clone(),
+        serial_number: info.serial_number.clone(),
+        product_code: info.product_code as i64,
+        edid_base64: general_purpose::STANDARD.encode(info.edid_bytes),
+        edid_serial_number: info.edid_serial_number.clone(),
+    }
+}
+
 impl VarlinkInterface for DdcutilService {
     fn detect(&self, call: &mut dyn Call_Detect, include_offline: bool) -> varlink::Result<()> {
         debug_varlink_call!(call);
@@ -36,7 +52,7 @@ impl VarlinkInterface for DdcutilService {
             return Ok(());
         }
         let displays = ddcutil::list_displays(include_offline)?;
-        let detect_entries: Vec<DetectEntry> = displays.iter().map(Into::into).collect();
+        let detect_entries: Vec<DetectEntry> = displays.into_iter().map(to_detect_entry).collect();
         call.reply(detect_entries.len() as i64, detect_entries)
     }
 
@@ -306,7 +322,7 @@ impl VarlinkInterface for DdcutilService {
         debug_varlink_call!(call);
         let _guard = self.state.lock().unwrap();
         let displays = ddcutil::list_displays(include_offline)?;
-        let detect_entries: Vec<DetectEntry> = displays.iter().map(Into::into).collect();
+        let detect_entries: Vec<DetectEntry> = displays.into_iter().map(to_detect_entry).collect();
         call.reply(detect_entries.len() as i64, detect_entries)
     }
 

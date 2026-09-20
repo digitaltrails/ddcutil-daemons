@@ -2,8 +2,6 @@
 //SPDX-License-Identifier: GPL-2.0-or-later
 // src/ddcutil.rs
 
-use crate::com_ddcutil_service::DetectEntry;
-
 use crate::ffi::*;
 use base64::{engine::general_purpose, Engine as _};
 use crossbeam_channel::Sender;
@@ -206,23 +204,6 @@ impl From<&DDCA_Display_Info> for DisplayInfo {
             serial_number: cstr_from_fixed_array(&raw.sn),
             edid_bytes: raw.edid_bytes,
             edid_serial_number: edid_serial_number(&raw.edid_bytes).to_string(),
-        }
-    }
-}
-
-impl From<&DisplayInfo> for DetectEntry {
-    fn from(info: &DisplayInfo) -> Self {
-        Self {
-            display_ref: info.display_ref as i64,
-            display_number: info.display_number as i64,
-            usb_bus: info.usb_bus as i64,
-            usb_device: info.usb_device as i64,
-            mfg_id: info.manufacturer_id.clone(),
-            model_name: info.model_name.clone(),
-            serial_number: info.serial_number.clone(),
-            product_code: info.product_code as i64,
-            edid_base64: general_purpose::STANDARD.encode(info.edid_bytes),
-            edid_serial_number: info.edid_serial_number.clone(),
         }
     }
 }
