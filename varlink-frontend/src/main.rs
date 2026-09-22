@@ -1,6 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Contributors to ddcutil-varlink <https://github.com/digitaltrails/ddcutil-varlink>
 // SPDX-License-Identifier: GPL-2.0-or-later
-// src/main.rs
 
 //! # ddcutil-varlink
 //!
@@ -28,12 +27,7 @@ mod com_ddcutil_service {
     include!(concat!(env!("OUT_DIR"), "/com.ddcutil.service.rs"));
 }
 
-// Our FFI wrapper around the generated bindings for libddcutil.
-mod ffi;
-
 // Our modules
-mod ddcutil;
-mod polling;
 mod service;
 mod subscribers;
 mod varlink_impl;
@@ -68,10 +62,10 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     );
 
     // Create our implementation of the service.
-    // Obtain the internal_event_receiver. Events are forwarded internally to the subscribers 
-    // module which converts them to external varlink events and dispatches them to 
+    // Obtain the internal_event_receiver. Events are forwarded internally to the subscribers
+    // module which converts them to external varlink events and dispatches them to
     // external subscribers.
-    let (service_implementation, 
+    let (service_implementation,
         internal_event_receiver) = DdcutilService::new();
 
     // Spawn thread to forward ddcutil events to Varlink subscribers

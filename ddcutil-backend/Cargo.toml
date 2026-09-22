@@ -1,0 +1,25 @@
+# SPDX-FileCopyrightText: 2026 Contributors to ddcutil-varlink <https://github.com/digitaltrails/ddcutil-varlink>
+# SPDX-License-Identifier: GPL-2.0-or-later
+
+[package]
+name = "ddcutil-backend"
+version = "1.0.0"
+edition = "2021"
+
+
+[dependencies]
+varlink = "13"
+thiserror = "1.0"
+log = "0.4"
+base64 = "0.21"
+libc = "0.2"
+serde = "1.0"
+serde_derive = "1.0"
+serde_json = "1.0.151"
+crossbeam-channel = "0.5.16"
+regex = "1.13.1"
+scopeguard = "1.2.0"
+
+
+[build-dependencies]
+bindgen = "0.70"             # match whatever version varlink-frontend currently uses

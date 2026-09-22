@@ -1,16 +1,15 @@
 // SPDX-FileCopyrightText: 2026 Contributors to ddcutil-varlink <https://github.com/digitaltrails/ddcutil-varlink>
 // SPDX-License-Identifier: GPL-2.0-or-later
-// src/varlink_impl.rs
 
 use crate::com_ddcutil_service::*;
-use crate::ddcutil;
+use ddcutil_backend::ddcutil;
 pub use crate::service::DdcutilService;
 use crossbeam_channel::unbounded;
 use log::{error};
 use std::sync::atomic::Ordering;
 use base64::{engine::general_purpose, Engine as _};
 use varlink::StringHashMap;
-use crate::ddcutil::{InternalEvent, InternalEventKind, DisplayInfo};
+use ddcutil_backend::ddcutil::{InternalEvent, InternalEventKind, DisplayInfo};
 // ============================================================================
 // Varlink Interface Implementation
 // ============================================================================

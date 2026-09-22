@@ -1,8 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Contributors to ddcutil-varlink <https://github.com/digitaltrails/ddcutil-varlink>
 // SPDX-License-Identifier: GPL-2.0-or-later
-// src/subscribers.rs
 
-use crate::ddcutil::InternalEvent;
+use ddcutil_backend::ddcutil::InternalEvent;
 use crossbeam_channel::{Receiver, Sender};
 use log::{debug, info};
 use std::sync::atomic::{AtomicUsize, Ordering};

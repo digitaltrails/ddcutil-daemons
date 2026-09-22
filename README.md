@@ -9,6 +9,12 @@ A ddcutil varlink service for control of DDC Monitors/VDUs
 >
 > Non-standard manufacturer specific features should only be experimented with caution, some may have irreversible consequences, including bricking the hardware.
 
+> [!WARNING]
+> This branch has been refactored to allow separate frontend implementations.
+> The varlink-frontend is fully functional (or should be).
+> The dbus-frontend is incomplete, most calls are stubbed.
+
+
 > [!Tip]
 > All methods in [varlink/com.ddcutil.service.varlink](varlink/com.ddcutil.service.varlink) have now been implemented.
 > 

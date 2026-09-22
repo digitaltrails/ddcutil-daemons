@@ -1,22 +1,64 @@
 // SPDX-FileCopyrightText: 2026 Contributors to ddcutil-varlink <https://github.com/digitaltrails/ddcutil-varlink>
 // SPDX-License-Identifier: GPL-2.0-or-later
-// src/polling.rs
 
-use crate::ddcutil::{get_display_info_list, is_dpms_awake, redetect, sleep_interruptible, InternalEvent, InternalEventType, DisplayRef};
-use crate::service;
-use crate::service::ServiceSharedState;
+use crate::ddcutil::{get_display_info_list, is_dpms_awake, redetect, sleep_interruptible, InternalEvent, InternalEventKind, InternalEventType, DisplayRef};
 use base64::{engine::general_purpose, Engine as _};
 use crossbeam_channel::{Receiver, Sender};
 use log::{debug, error, info};
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+use std::thread;
+
 // ============================================================================
 // Polling loop (runs in a background thread)
 // Alternative way of detecting connectivity changes and DPMS events.
 // (libddcutil does not handle DPMS and on some hardware cannot detect
 // connectivity changes)
 // ============================================================================
+
+
+// ============================================================================
+// ServiceState – everything protected by the single lock
+// ============================================================================
+
+/// All state that must be protected by the single mutex.
+/// This includes configuration, polling thread handles, and any other shared data.
+///
+/// The poll_do_redetect is probably only ever needed if linked against libddcutil
+/// version <= 2.1. From 2.2 onward libddcutil events for hotplugging of monitors
+/// seems to be reliable for all drivers.  This option is provided in incase there
+/// is someone out there that still has issues or wants to use an old libddutil.
+pub struct ServiceSharedState {
+    // Configuration
+    pub poll_interval_secs: u32,
+    pub poll_cascade_secs: f64,
+    pub poll_do_redetect: bool,  // This is probably only ever needed if linked against libddcutil version <= 2.1
+    pub events_enabled: bool,
+    // Polling thread management
+    pub poll_thread: Option<thread::JoinHandle<()>>,
+    pub shutdown_dispatcher: Option<Sender<()>>,
+}
+
+impl Default for ServiceSharedState {
+    fn default() -> Self {
+        let poll_do_detect = std::env::var("DDCUTIL_POLL_DO_REDETECT")
+        .map(|val| val.to_lowercase() == "true" || val == "1")
+        .unwrap_or(false); // Fallback default if env var is not set
+        info!("Environment variable DDCUTIL_POLL_DO_REDETECT={} (not needed for libddcutil >= 2.2)",
+              poll_do_detect);
+        Self {
+            poll_interval_secs: 30,
+            poll_cascade_secs: 0.5,
+            poll_do_redetect: poll_do_detect,
+            events_enabled: false,
+            poll_thread: None,
+            shutdown_dispatcher: None,
+        }
+    }
+}
+
+
 
 /// State of a single display for the polling loop.
 #[derive(Debug, Clone, Copy)]
@@ -71,7 +113,7 @@ pub fn polling_loop(
 
 
         if do_redetect {
-            // This code is provided in incase there is someone out there that still 
+            // This code is provided in incase there is someone out there that still
             // has issues with detect or someone who wants to use an old libddutil.
             if let Err(e) = redetect() {
                 error!("redetect failed: {}", e);
@@ -129,13 +171,13 @@ pub fn polling_loop(
 
         if !initializing {
             for lost_edid in lost_connection {
-                let internal_event = service::build_hotplug_event(lost_edid, InternalEventType::Disconnected);
+                let internal_event = build_hotplug_event(lost_edid, InternalEventType::Disconnected);
                 info!("poll: sending connection change event {:?}", internal_event);
                 let _ = internal_event_sender.send(internal_event);
             }
 
             for new_edid in newly_detected {
-                let internal_event = service::build_hotplug_event(new_edid, InternalEventType::Connected);
+                let internal_event = build_hotplug_event(new_edid, InternalEventType::Connected);
                 info!("poll: sending connection change event {:?}", internal_event);
                 let _ = internal_event_sender.send(internal_event);
             }
@@ -149,7 +191,7 @@ pub fn polling_loop(
                         } else {
                             InternalEventType::DpmsAsleep
                         };
-                        let internal_event = service::build_dpms_event(edid, event_type);
+                        let internal_event = build_dpms_event(edid, event_type);
                         debug!("poll: sending DPMS change event {:?}", internal_event);
                         let _ = internal_event_sender.send(internal_event);
                     }
@@ -170,3 +212,36 @@ pub fn polling_loop(
     }
 }
 
+// ============================================================================
+// Event helpers
+// ============================================================================
+
+
+
+/// Builds an envent for a hotplug connect or disconnect.
+/// The edit_base64 may be empty for a disconnect (no longer available).
+pub fn build_hotplug_event(edid: &String, event_type: InternalEventType) -> InternalEvent {
+    let data = serde_json::json!({
+        "edid_base64": edid,
+        "event_type": event_type.as_str(),
+                                 "origin": "polling",
+                                 "flags": 0,
+    }).to_string();
+    InternalEvent {
+        kind: InternalEventKind::ConnectedDisplaysChanged,
+        data,
+    }
+}
+
+/// Builds an event for DPMS awake or asleep.
+pub fn build_dpms_event(edid: &String, event_type: InternalEventType) -> InternalEvent {
+    let data = serde_json::json!({
+        "event_type": event_type.as_str(),
+                                 "origin": "polling",
+                                 "edid_base64": edid,
+                                 "awake": InternalEventType::DpmsAwake == event_type,
+                                 "flags": 0,
+    })
+    .to_string();
+    InternalEvent { kind: InternalEventKind::ConnectedDisplaysChanged, data }
+}

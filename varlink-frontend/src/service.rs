@@ -1,54 +1,16 @@
 // SPDX-FileCopyrightText: 2026 Contributors to ddcutil-varlink <https://github.com/digitaltrails/ddcutil-varlink>
 // SPDX-License-Identifier: GPL-2.0-or-later
-// src/service.rs
 
-use crate::ddcutil::{InternalEvent, InternalEventKind, InternalEventType};
-use crate::{ddcutil, polling, subscribers};
+use ddcutil_backend::ddcutil::{InternalEvent};
+use ddcutil_backend::{ddcutil, polling};
+use crate::subscribers;
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use log::{debug, error, info};
 use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 use std::thread;
+use ddcutil_backend::polling::ServiceSharedState;
 
-// ============================================================================
-// ServiceState – everything protected by the single lock
-// ============================================================================
-
-/// All state that must be protected by the single mutex.
-/// This includes configuration, polling thread handles, and any other shared data.
-///
-/// The poll_do_redetect is probably only ever needed if linked against libddcutil
-/// version <= 2.1. From 2.2 onward libddcutil events for hotplugging of monitors
-/// seems to be reliable for all drivers.  This option is provided in incase there
-/// is someone out there that still has issues or wants to use an old libddutil.
-pub struct ServiceSharedState {
-    // Configuration
-    pub poll_interval_secs: u32,
-    pub poll_cascade_secs: f64,
-    pub poll_do_redetect: bool,  // This is probably only ever needed if linked against libddcutil version <= 2.1
-    pub events_enabled: bool,
-    // Polling thread management
-    poll_thread: Option<thread::JoinHandle<()>>,
-    shutdown_dispatcher: Option<Sender<()>>,
-}
-
-impl Default for ServiceSharedState {
-    fn default() -> Self {
-        let poll_do_detect = std::env::var("DDCUTIL_POLL_DO_REDETECT")
-            .map(|val| val.to_lowercase() == "true" || val == "1")
-            .unwrap_or(false); // Fallback default if env var is not set
-        info!("Environment variable DDCUTIL_POLL_DO_REDETECT={} (not needed for libddcutil >= 2.2)",
-            poll_do_detect);
-        Self {
-            poll_interval_secs: 30,
-            poll_cascade_secs: 0.5,
-            poll_do_redetect: poll_do_detect,
-            events_enabled: false,
-            poll_thread: None,
-            shutdown_dispatcher: None,
-        }
-    }
-}
 
 // ============================================================================
 // DdcutilService – main service implementation
@@ -117,7 +79,7 @@ impl DdcutilService {
         new_value: i64,
         client_context: Option<String>,
     ) {
-        let internal_event = build_vcp_changed_event(
+        let internal_event = ddcutil::build_vcp_changed_event(
             display_number,
             edid_base64,
             vcp_code,
@@ -191,59 +153,3 @@ impl DdcutilService {
     }
 }
 
-// ============================================================================
-// Event helpers
-// ============================================================================
-
-/// Builds a VCP Changed event.
-fn build_vcp_changed_event(
-    display_number: Option<i64>,
-    edid_base64: Option<&str>,
-    vcp_code: i64,
-    new_value: i64,
-    client_context: String,
-) -> InternalEvent {
-    let data = serde_json::json!({
-        "event_type": InternalEventType::VcpChange.as_str(),
-        "origin": "ddcutil-varlink",  // for now this is the only origin for set vcp
-        "display_number": display_number,
-        "edid_base64": edid_base64,
-        "vcp_code": vcp_code,
-        "new_value": new_value,
-        "client_context": client_context,
-    })
-    .to_string();
-
-    InternalEvent {
-        kind: InternalEventKind::VcpChange,
-        data,
-    }
-}
-
-/// Builds an envent for a hotplug connect or disconnect.
-/// The edit_base64 may be empty for a disconnect (no longer available).
-pub fn build_hotplug_event(edid: &String, event_type: InternalEventType) -> InternalEvent {
-    let data = serde_json::json!({
-        "edid_base64": edid,
-        "event_type": event_type.as_str(),
-        "origin": "polling",
-        "flags": 0,
-    }).to_string();
-    InternalEvent {
-        kind: InternalEventKind::ConnectedDisplaysChanged,
-        data,
-    }
-}
-
-/// Builds an event for DPMS awake or asleep.
-pub fn build_dpms_event(edid: &String, event_type: InternalEventType) -> InternalEvent {
-    let data = serde_json::json!({
-                                        "event_type": event_type.as_str(),
-                                        "origin": "polling",
-                                        "edid_base64": edid,
-                                        "awake": InternalEventType::DpmsAwake == event_type,
-                                        "flags": 0,
-                                    })
-        .to_string();
-    InternalEvent { kind: InternalEventKind::ConnectedDisplaysChanged, data }
-}

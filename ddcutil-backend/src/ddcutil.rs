@@ -1,6 +1,5 @@
-//SPDX-FileCopyrightText: 2026 Contributors to ddcutil-varlink <https://github.com/digitaltrails/ddcutil-varlink>
-//SPDX-License-Identifier: GPL-2.0-or-later
-// src/ddcutil.rs
+// SPDX-FileCopyrightText: 2026 Contributors to ddcutil-varlink <https://github.com/digitaltrails/ddcutil-varlink>
+// SPDX-License-Identifier: GPL-2.0-or-later
 
 use crate::ffi::*;
 use base64::{engine::general_purpose, Engine as _};
@@ -187,7 +186,7 @@ pub struct ValueData {
     pub name: String,
 }
 
-fn edid_serial_number(edid: &[u8; 128]) -> u32 {
+pub fn edid_serial_number(edid: &[u8; 128]) -> u32 {
     u32::from_le_bytes([edid[0x0c], edid[0x0d], edid[0x0e], edid[0x0f]])
 }
 
@@ -984,4 +983,29 @@ fn create_internal_event(event: DDCA_Display_Status_Event) -> InternalEvent {
         .to_string();
 
     InternalEvent { kind: InternalEventKind::ConnectedDisplaysChanged, data }
+}
+
+/// Builds a VCP Changed event.
+pub fn build_vcp_changed_event(
+    display_number: Option<i64>,
+    edid_base64: Option<&str>,
+    vcp_code: i64,
+    new_value: i64,
+    client_context: String,
+) -> InternalEvent {
+    let data = serde_json::json!({
+        "event_type": InternalEventType::VcpChange.as_str(),
+                                 "origin": "ddcutil-varlink",  // for now this is the only origin for set vcp
+                                 "display_number": display_number,
+                                 "edid_base64": edid_base64,
+                                 "vcp_code": vcp_code,
+                                 "new_value": new_value,
+                                 "client_context": client_context,
+    })
+    .to_string();
+
+    InternalEvent {
+        kind: InternalEventKind::VcpChange,
+        data,
+    }
 }

@@ -1,0 +1,11 @@
+# SPDX-FileCopyrightText: 2026 Contributors to ddcutil-varlink <https://github.com/digitaltrails/ddcutil-varlink>
+# SPDX-License-Identifier: GPL-2.0-or-later
+[package]
+name = "ddcutil-dbus"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+ddcutil-backend = { path = "../ddcutil-backend" }
+zbus = { version = "5", features = ["blocking"] }
+base64 = "0.21.7"
