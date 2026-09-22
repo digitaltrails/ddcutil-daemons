@@ -12,8 +12,6 @@ use zbus::{
 };
 
 use ddcutil_backend::ddcutil;
-//use ddcutil_backend::com_ddcutil_service;
-use ddcutil_backend::ddcutil::{edid_serial_number, list_displays};
 
 const DETECT_ALL: u32 = 8;
 
@@ -76,7 +74,7 @@ impl DdcutilService {
                     disp.serial_number,
                     disp.product_code,
                     general_purpose::STANDARD.encode(disp.edid_bytes),
-                    edid_serial_number(&disp.edid_bytes),
+                    ddcutil::edid_serial_number(&disp.edid_bytes),
                 )
             })
             .collect();

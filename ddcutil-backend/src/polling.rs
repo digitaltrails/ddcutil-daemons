@@ -1,15 +1,20 @@
 // SPDX-FileCopyrightText: 2026 Contributors to ddcutil-varlink <https://github.com/digitaltrails/ddcutil-varlink>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-use crate::ddcutil::{get_display_info_list, is_dpms_awake, redetect, sleep_interruptible, InternalEvent, InternalEventKind, InternalEventType, DisplayRef};
+use crate::ddcutil;
+use crate::ddcutil::{
+    DisplayRef,
+    InternalEvent,
+    InternalEventType,
+};
+
 use base64::{engine::general_purpose, Engine as _};
 use crossbeam_channel::{Receiver, Sender};
 use log::{debug, error, info};
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
 use std::thread;
-
+use std::time::Duration;
 // ============================================================================
 // Polling loop (runs in a background thread)
 // Alternative way of detecting connectivity changes and DPMS events.
@@ -105,7 +110,7 @@ pub fn polling_loop(
 
         if !events_enabled {
             drop(guard);
-            sleep_interruptible(Duration::from_secs(5));
+            ddcutil::sleep_interruptible(Duration::from_secs(5));
             continue;
         }
 
@@ -115,20 +120,20 @@ pub fn polling_loop(
         if do_redetect {
             // This code is provided in incase there is someone out there that still
             // has issues with detect or someone who wants to use an old libddutil.
-            if let Err(e) = redetect() {
+            if let Err(e) = ddcutil::redetect() {
                 error!("redetect failed: {}", e);
                 drop(guard);
-                sleep_interruptible(Duration::from_secs(interval as u64));
+                ddcutil::sleep_interruptible(Duration::from_secs(interval as u64));
                 continue;
             }
         }
 
-        let current_displays = match get_display_info_list(true) {
+        let current_displays = match ddcutil::get_display_info_list(true) {
             Ok(list) => list,
             Err(e) => {
                 error!("get_display_info_list failed: {}", e);
                 drop(guard);
-                sleep_interruptible(Duration::from_secs(interval as u64));
+                ddcutil::sleep_interruptible(Duration::from_secs(interval as u64));
                 continue;
             }
         };
@@ -137,7 +142,7 @@ pub fn polling_loop(
         let mut current_states = HashMap::with_capacity(current_displays.len());
         for display in &current_displays {
             let edid = general_purpose::STANDARD.encode(display.edid_bytes);
-            let awake = match is_dpms_awake(display.display_ref) {
+            let awake = match ddcutil::is_dpms_awake(display.display_ref) {
                 Ok(a) => a,
                 Err(e) => {
                     debug!(
@@ -171,13 +176,13 @@ pub fn polling_loop(
 
         if !initializing {
             for lost_edid in lost_connection {
-                let internal_event = build_hotplug_event(lost_edid, InternalEventType::Disconnected);
+                let internal_event = ddcutil::build_hotplug_event(lost_edid, InternalEventType::Disconnected);
                 info!("poll: sending connection change event {:?}", internal_event);
                 let _ = internal_event_sender.send(internal_event);
             }
 
             for new_edid in newly_detected {
-                let internal_event = build_hotplug_event(new_edid, InternalEventType::Connected);
+                let internal_event = ddcutil::build_hotplug_event(new_edid, InternalEventType::Connected);
                 info!("poll: sending connection change event {:?}", internal_event);
                 let _ = internal_event_sender.send(internal_event);
             }
@@ -191,7 +196,7 @@ pub fn polling_loop(
                         } else {
                             InternalEventType::DpmsAsleep
                         };
-                        let internal_event = build_dpms_event(edid, event_type);
+                        let internal_event = ddcutil::build_dpms_event(edid, event_type);
                         debug!("poll: sending DPMS change event {:?}", internal_event);
                         let _ = internal_event_sender.send(internal_event);
                     }
@@ -208,40 +213,6 @@ pub fn polling_loop(
         } else {
             Duration::from_secs(interval as u64)
         };
-        sleep_interruptible(sleep_duration);
+        ddcutil::sleep_interruptible(sleep_duration);
     }
-}
-
-// ============================================================================
-// Event helpers
-// ============================================================================
-
-
-
-/// Builds an envent for a hotplug connect or disconnect.
-/// The edit_base64 may be empty for a disconnect (no longer available).
-pub fn build_hotplug_event(edid: &String, event_type: InternalEventType) -> InternalEvent {
-    let data = serde_json::json!({
-        "edid_base64": edid,
-        "event_type": event_type.as_str(),
-                                 "origin": "polling",
-                                 "flags": 0,
-    }).to_string();
-    InternalEvent {
-        kind: InternalEventKind::ConnectedDisplaysChanged,
-        data,
-    }
-}
-
-/// Builds an event for DPMS awake or asleep.
-pub fn build_dpms_event(edid: &String, event_type: InternalEventType) -> InternalEvent {
-    let data = serde_json::json!({
-        "event_type": event_type.as_str(),
-                                 "origin": "polling",
-                                 "edid_base64": edid,
-                                 "awake": InternalEventType::DpmsAwake == event_type,
-                                 "flags": 0,
-    })
-    .to_string();
-    InternalEvent { kind: InternalEventKind::ConnectedDisplaysChanged, data }
 }

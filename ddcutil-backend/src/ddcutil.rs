@@ -929,7 +929,7 @@ pub fn set_internal_event_sender(sender: Sender<InternalEvent>) -> Result<()> {
 pub extern "C" fn native_ddc_event_callback(native_event: DDCA_Display_Status_Event) {
     debug!("my_display_callback event {}", native_event.event_type);
 
-    let internal_event = create_internal_event(native_event);  // side effect sets NEED_POLL
+    let internal_event = build_event_from_ddca_event(native_event);  // side effect sets NEED_POLL
 
     // Send to the channel (if initialized) - If the receiver is gone, just drop the event – no harm.
     if let Some(sender) = INTERNAL_EVENT_SENDER.get() {
@@ -938,7 +938,12 @@ pub extern "C" fn native_ddc_event_callback(native_event: DDCA_Display_Status_Ev
     }
 }
 
-fn create_internal_event(event: DDCA_Display_Status_Event) -> InternalEvent {
+
+// ============================================================================
+// Event helpers
+// ============================================================================
+
+fn build_event_from_ddca_event(event: DDCA_Display_Status_Event) -> InternalEvent {
     // Map the C event type to our Rust enum
     #[allow(non_upper_case_globals)]
     let internal_event_type = match event.event_type {
@@ -1008,4 +1013,32 @@ pub fn build_vcp_changed_event(
         kind: InternalEventKind::VcpChange,
         data,
     }
+}
+
+/// Builds an envent for a hotplug connect or disconnect.
+/// The edit_base64 may be empty for a disconnect (no longer available).
+pub fn build_hotplug_event(edid: &String, event_type: InternalEventType) -> InternalEvent {
+    let data = serde_json::json!({
+        "edid_base64": edid,
+        "event_type": event_type.as_str(),
+                                 "origin": "polling",
+                                 "flags": 0,
+    }).to_string();
+    InternalEvent {
+        kind: InternalEventKind::ConnectedDisplaysChanged,
+        data,
+    }
+}
+
+/// Builds an event for DPMS awake or asleep.
+pub fn build_dpms_event(edid: &String, event_type: InternalEventType) -> InternalEvent {
+    let data = serde_json::json!({
+        "event_type": event_type.as_str(),
+                                 "origin": "polling",
+                                 "edid_base64": edid,
+                                 "awake": InternalEventType::DpmsAwake == event_type,
+                                 "flags": 0,
+    })
+    .to_string();
+    InternalEvent { kind: InternalEventKind::ConnectedDisplaysChanged, data }
 }
