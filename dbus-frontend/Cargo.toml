@@ -9,3 +9,4 @@ edition = "2024"
 ddcutil-backend = { path = "../ddcutil-backend" }
 zbus = { version = "5", features = ["blocking"] }
 base64 = "0.21.7"
+log = "0.4.34"

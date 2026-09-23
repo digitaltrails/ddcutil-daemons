@@ -4,11 +4,13 @@ use base64::Engine;
 use base64::engine::general_purpose;
 use ddcutil_backend::ddcutil;
 use std::collections::HashMap;
+use log::{error};
 use zbus::interface;
 use zbus::object_server::SignalEmitter;
 
 const DETECT_ALL: u32 = 8;
 const EDID_PREFIX_ALLOWED: u32 = 1;
+const NO_VERIFY: u32 = 4;
 
 /// The main service object. Holds all state and (eventually).
 pub struct DdcutilService {
@@ -139,7 +141,7 @@ impl DdcutilService {
 
         let err_result = |e: ddcutil::Error| -> (u16, u16, String, i32, String) {
             let code: i32 = e.status_code().try_into().unwrap_or(0);
-            (0, 0, "".to_string(), code, format!("get_vcp: {}", e))
+            (0, 0, "".to_string(), code, format!("GetVcp: {}", e))
         };
 
         let dref = match ddcutil::find_display(
@@ -176,19 +178,33 @@ impl DdcutilService {
     /// Sets a VCP value.
     fn set_vcp(
         &mut self,
+        #[zbus(header)] hdr: zbus::message::Header<'_>,
+        #[zbus(signal_emitter)] emitter: SignalEmitter<'_>,
         display_number: i32,
         edid_txt: &str,
         vcp_code: u8,
         vcp_new_value: u16,
         flags: u32,
     ) -> (i32, String) {
-        // TODO: call ddcutil backend
-        (0, String::new())
+        // Delegate directly by passing "" for the context string.
+        // We pass the emitter through cleanly by value.
+        self.set_vcp_with_context(
+            hdr,
+            emitter,
+            display_number,
+            edid_txt,
+            vcp_code,
+            vcp_new_value,
+            "",
+            flags,
+        )
     }
 
     /// Sets a VCP value with a client context string.
     fn set_vcp_with_context(
         &mut self,
+        #[zbus(header)] hdr: zbus::message::Header<'_>,
+        #[zbus(signal_emitter)] emitter: SignalEmitter<'_>,
         display_number: i32,
         edid_txt: &str,
         vcp_code: u8,
@@ -196,8 +212,45 @@ impl DdcutilService {
         client_context: &str,
         flags: u32,
     ) -> (i32, String) {
-        // TODO: call ddcutil backend
-        (0, String::new())
+
+        let err_result = |e: ddcutil::Error| -> (i32, String) {
+            let code: i32 = e.status_code().try_into().unwrap_or(0);
+            (code, format!("SetVcp: {}", e))
+        };
+
+        let dref = match ddcutil::find_display(
+            Option::Some(display_number.into()),
+            Option::Some(edid_txt),
+            flags & EDID_PREFIX_ALLOWED != 0) {
+            Ok(dref) => dref,
+            Err(e) => return err_result(e),
+        };
+
+        let handle = match ddcutil::open_display(dref) {
+            Ok(handle) => handle,
+            Err(e) => return err_result(e),
+        };
+
+        match ddcutil::set_vcp(&handle, vcp_code as u8, vcp_new_value, flags & NO_VERIFY != 0) {
+            Ok(()) => {
+                let sender_str: String = hdr.sender()
+                    .map(|name| name.to_string())
+                    .unwrap_or_else(|| "unknown".to_string());
+
+                let _ = zbus::block_on(async { Self::vcp_value_changed(
+                    &emitter,
+                    display_number,
+                    edid_txt,
+                    vcp_code,
+                    vcp_new_value,
+                    &sender_str,
+                    client_context,
+                    flags,
+                ).await}).map_err(|e| eprintln!("SetVcp: error on signaling change {}", e));
+                (0, "".to_string())
+            },
+            Err(e) => err_result(e),
+        }
     }
 
     /// Gets metadata for a VCP code.
