@@ -4,9 +4,11 @@ use base64::Engine;
 use base64::engine::general_purpose;
 use ddcutil_backend::ddcutil;
 use std::collections::HashMap;
+use std::fs::canonicalize;
 use log::{error};
 use zbus::interface;
 use zbus::object_server::SignalEmitter;
+use zbus::zvariant::Value::Str;
 
 const DETECT_ALL: u32 = 8;
 const EDID_PREFIX_ALLOWED: u32 = 1;
@@ -83,6 +85,56 @@ impl DdcutilService {
 
         (0, result_vector, 0, String::new())
     }
+
+    fn convert_capabilities_data(
+        data: ddcutil::CapabilitiesData,
+    ) -> (
+        String,
+        u8,
+        u8,
+        HashMap<u8, String>,
+        HashMap<u8, (String, String, HashMap<u8, String>)>,
+        i32,
+        String,
+    ) {
+        let commands = data
+            .commands
+            .into_iter()
+            .map(|cmd| (cmd.code as u8, cmd.description))
+            .collect();
+
+        let capabilities: HashMap<u8, (String, String, HashMap<u8, String>)> = data
+            .features
+            .into_iter()
+            .map(|feature| {
+                // Inner map: a{ys} -> HashMap<u8, String>
+                let values: HashMap<u8, String> = feature
+                    .values
+                    .into_iter()
+                    .map(|val| (val.code as u8, val.name)) // Keep as u8 instead of formatting to String
+                    .collect();
+
+                (
+                    feature.code as u8, // Keep as u8 instead of formatting to String
+                    (
+                        feature.name,
+                        feature.description,
+                        values,
+                    ),
+                )
+            })
+            .collect();
+
+        (
+            data.model_name,
+            data.mccs_major,
+            data.mccs_minor,
+            commands,
+            capabilities,
+            0,
+            "OK".to_string(),
+        )
+    }
 }
 
 #[interface(name = "com.ddcutil.DdcutilInterface")]
@@ -101,7 +153,7 @@ impl DdcutilService {
             "Restart called: options={}, level={}, flags={}",
             text_options, syslog_level, flags
         );
-        (0, String::new())
+        (0, "OK".to_string(),)
     }
 
     /// Detects connected displays.
@@ -158,7 +210,7 @@ impl DdcutilService {
         };
 
         match ddcutil::get_vcp(&handle, vcp_code as u8) {
-            Ok((current, max, formatted)) => (current as u16, max as u16, formatted, 0, "".to_string()),
+            Ok((current, max, formatted)) => (current as u16, max as u16, formatted, 0, "OK".to_string(),),
             Err(e) => err_result(e),
         }
     }
@@ -201,7 +253,7 @@ impl DdcutilService {
                 }
             }
         }
-        (values, 0, "".to_string())
+        (values, 0, "OK".to_string(),)
     }
 
     /// Sets a VCP value.
@@ -276,7 +328,7 @@ impl DdcutilService {
                     client_context,
                     flags,
                 ).await}).map_err(|e| eprintln!("SetVcp: error on signaling change {}", e));
-                (0, String::new())
+                (0, "OK".to_string(),)
             },
             Err(e) => err_result(e),
         }
@@ -329,7 +381,7 @@ impl DdcutilService {
                 metadata.is_complex,
                 metadata.is_continuous,
                 0,
-                String::new(),
+                "OK".to_string(),
             ),
             Err(e) => err_result(e),
         }
@@ -362,7 +414,7 @@ impl DdcutilService {
         };
 
         match ddcutil::get_capabilities_string(&handle) {
-            Ok(caps_str) => (caps_str, 0, String::new()),
+            Ok(caps_str) => (caps_str, 0, "OK".to_string(),),
             Err(e) => err_result(e),
         }
     }
@@ -382,16 +434,44 @@ impl DdcutilService {
         i32,
         String,
     ) {
-        // TODO: call ddcutil backend
-        (
-            String::new(),
-            0,
-            0,
-            HashMap::new(),
-            HashMap::new(),
-            0,
-            String::new(),
-        )
+
+
+        let err_result = |e: ddcutil::Error| -> (String,
+                                                 u8,
+                                                 u8,
+                                                 HashMap<u8, String>,
+                                                 HashMap<u8, (String, String, HashMap<u8, String>)>,
+                                                 i32,
+                                                 String,) {
+            let code: i32 = e.status_code().try_into().unwrap_or(0);
+            (
+                String::new(),
+                0,
+                0,
+                HashMap::new(),
+                HashMap::new(),
+                code,
+                format!("SetVcp: {}", e),
+            )
+        };
+
+        let dref = match ddcutil::find_display(
+            Option::Some(display_number.into()),
+            Option::Some(edid_txt),
+            flags & EDID_PREFIX_ALLOWED != 0) {
+            Ok(dref) => dref,
+            Err(e) => return err_result(e),
+        };
+
+        let handle = match ddcutil::open_display(dref) {
+            Ok(handle) => handle,
+            Err(e) => return err_result(e),
+        };
+
+        match ddcutil::get_capabilities_data(handle) {
+            Ok(cap_data) => Self::convert_capabilities_data(cap_data),
+            Err(e) => err_result(e),
+        }
     }
 
     /// Gets the current state of a display.
