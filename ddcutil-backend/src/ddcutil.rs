@@ -1,7 +1,12 @@
 // SPDX-FileCopyrightText: 2026 Contributors to ddcutil-varlink <https://github.com/digitaltrails/ddcutil-varlink>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-use crate::ffi::*;
+//! Safe, idiomatic Rust bindings for `libddcutil`.
+//!
+//! This module wraps the underlying unsafe C API provided by `libddcutil` to
+//! manage monitor settings using native Rust types and proper ownership rules.
+
+use crate::ffi_wrapper::*;
 use base64::{engine::general_purpose, Engine as _};
 use crossbeam_channel::Sender;
 use log::{debug, error, info, warn};
@@ -15,9 +20,6 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::OnceLock;
 use std::time::Duration;
 
-// ============================================================================
-// Macros
-// ============================================================================
 macro_rules! ddca_call {
     ($call:expr) => {{
         let status = unsafe { $call };

@@ -1,3 +1,4 @@
+//! D-Bus interface to libddcutil.
 
 use base64::Engine;
 use base64::engine::general_purpose;
@@ -12,13 +13,13 @@ const EDID_PREFIX_ALLOWED: u32 = 1;
 const NO_VERIFY: u32 = 4;
 
 /// The main service object. Holds all state and (eventually).
-pub struct DdcutilService {
+pub struct DdcuDbusService {
     pub(crate) dynamic_sleep: bool,
     pub(crate) output_level: u32,
 }
 
 // ── Private helpers (not part of the D-Bus interface) ──────────────
-impl DdcutilService {
+impl DdcuDbusService {
     /// Shared body for `detect` and `list_detected`.
     ///
     /// When `force_redetect` is true, a rescan is triggered before listing.
@@ -135,7 +136,7 @@ impl DdcutilService {
 }
 
 #[interface(name = "com.ddcutil.DdcutilInterface")]
-impl DdcutilService {
+impl DdcuDbusService {
     // ── Methods ────────────────────────────────────────────────────────
 
     /// Restarts the service.

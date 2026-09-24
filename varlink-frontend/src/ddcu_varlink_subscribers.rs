@@ -1,15 +1,14 @@
 // SPDX-FileCopyrightText: 2026 Contributors to ddcutil-varlink <https://github.com/digitaltrails/ddcutil-varlink>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+//! Event subscribers to the varlink Subscribe call which is set_continues(true).
+//! Each subscriber receives a stream of results/events.
+
 use ddcutil_backend::ddcutil::InternalEvent;
 use crossbeam_channel::{Receiver, Sender};
 use log::{debug, info};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Mutex, OnceLock};
-// ============================================================================
-// Event subscribers to the varlink Subscribe call which is set_continues(true).
-// Each subscriber receives a stream of results/events.
-// ============================================================================
 
 #[derive(Debug)]
 struct Subscriber {

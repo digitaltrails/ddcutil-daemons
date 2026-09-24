@@ -1,6 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Contributors to ddcutil-varlink <https://github.com/digitaltrails/ddcutil-varlink>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+//! Polling loop (runs in a background thread)
+//! Alternative way of detecting connectivity changes and DPMS events.
+//! (libddcutil does not handle DPMS and on some hardware cannot detect
+//! connectivity changes)
+
 use crate::ddcutil;
 use crate::ddcutil::{
     DisplayRef,
@@ -15,12 +20,6 @@ use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
-// ============================================================================
-// Polling loop (runs in a background thread)
-// Alternative way of detecting connectivity changes and DPMS events.
-// (libddcutil does not handle DPMS and on some hardware cannot detect
-// connectivity changes)
-// ============================================================================
 
 
 // ============================================================================

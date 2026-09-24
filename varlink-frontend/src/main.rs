@@ -19,7 +19,7 @@ use std::os::unix::net::UnixListener;
 use std::os::unix::io::FromRawFd;
 use varlink::*;
 
-use varlink_impl::DdcutilService;
+use ddcu_varlink_impl::DdcuVarlinkService;
 
 // Our varlink generated interface for com_ddcutil_service.
 #[allow(nonstandard_style, dead_code, clippy::all, clippy::nursery)]
@@ -28,9 +28,9 @@ mod com_ddcutil_service {
 }
 
 // Our modules
-mod service;
-mod subscribers;
-mod varlink_impl;
+mod ddcu_varlink_service;
+mod ddcu_varlink_subscribers;
+mod ddcu_varlink_impl;
 
 /// Start the service on its unix socket.
 ///
@@ -66,12 +66,12 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     // module which converts them to external varlink events and dispatches them to
     // external subscribers.
     let (service_implementation,
-        internal_event_receiver) = DdcutilService::new();
+        internal_event_receiver) = DdcuVarlinkService::new();
 
     // Spawn thread to forward ddcutil events to Varlink subscribers
     std::thread::spawn(move || {
         // This will loop reading events and forwarding to varlink subscribers
-        subscribers::forward_to_all_subscribers(internal_event_receiver);
+        ddcu_varlink_subscribers::forward_to_all_subscribers(internal_event_receiver);
     });
 
     // Build the Varlink interface

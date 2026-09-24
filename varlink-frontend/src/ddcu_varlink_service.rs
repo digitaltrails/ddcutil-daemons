@@ -1,22 +1,19 @@
 // SPDX-FileCopyrightText: 2026 Contributors to ddcutil-varlink <https://github.com/digitaltrails/ddcutil-varlink>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+//! DdcVarlinkService – service implementation
+
 use ddcutil_backend::ddcutil::{InternalEvent};
-use ddcutil_backend::{ddcutil, polling};
-use crate::subscribers;
+use ddcutil_backend::{ddcutil, connectivity_polling};
+use crate::ddcu_varlink_subscribers;
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use log::{debug, error, info};
 use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 use std::thread;
-use ddcutil_backend::polling::ServiceSharedState;
+use ddcutil_backend::connectivity_polling::ServiceSharedState;
 
-
-// ============================================================================
-// DdcutilService – main service implementation
-// ============================================================================
-
-pub struct DdcutilService {
+pub struct DdcuVarlinkService {
     /// Single mutex protecting all shared state and libddcutil access.
     pub state: Arc<Mutex<ServiceSharedState>>,
     /// Channel for sending events from the polling thread and native callback.
@@ -25,7 +22,7 @@ pub struct DdcutilService {
     pub configuration_locked: Arc<AtomicBool>,
 }
 
-impl DdcutilService {
+impl DdcuVarlinkService {
     /// Create a new service instance. Initializes libddcutil and starts the native callback.
     /// Returns a receiver for internal events, other modules should use the receiver
     /// to forward events for dispatch to external varlink subscribers.
@@ -65,11 +62,11 @@ impl DdcutilService {
     // ----- Subscriptions control -----
 
     pub fn subscribe_to_internal_events(event_sender: Sender<InternalEvent>) -> usize {
-        subscribers::subscribe_to_intneral_events(event_sender)
+        ddcu_varlink_subscribers::subscribe_to_intneral_events(event_sender)
     }
 
     pub fn unsubscribe_from_events(id: usize) {
-        subscribers::unsubscribe_from_events(id)
+        ddcu_varlink_subscribers::unsubscribe_from_events(id)
     }
 
     pub fn broadcast_set_vcp(
@@ -86,7 +83,7 @@ impl DdcutilService {
             new_value,
             client_context.unwrap_or_default(),
         );
-        subscribers::broadcast_to_subscribers(internal_event);
+        ddcu_varlink_subscribers::broadcast_to_subscribers(internal_event);
     }
 
     // ----- Polling control -----
@@ -106,7 +103,7 @@ impl DdcutilService {
         let internal_event_sender = self.internal_event_sender.clone();
 
         let handle = thread::spawn(move || {
-            polling::polling_loop(state_arc, internal_event_sender, shutdown_listener);
+            connectivity_polling::polling_loop(state_arc, internal_event_sender, shutdown_listener);
         });
 
         state.poll_thread = Some(handle);
