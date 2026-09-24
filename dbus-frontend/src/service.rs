@@ -319,22 +319,20 @@ impl DdcutilService {
             Err(e) => return err_result(e),
         };
 
-        let metadata = match ddcutil::get_vcp_metadata(&handle, vcp_code.into()) {
-            Ok(metadata) => metadata,
-            Err(e) => return err_result(e),
-        };
-
-        (
-            metadata.feature_name,
-            metadata.description,
-            metadata.is_read_only,
-            metadata.is_write_only,
-            metadata.is_rw,
-            metadata.is_complex,
-            metadata.is_continuous,
-            0,
-            String::new(),
-        )
+        match ddcutil::get_vcp_metadata(&handle, vcp_code.into()) {
+            Ok(metadata) => (
+                metadata.feature_name,
+                metadata.description,
+                metadata.is_read_only,
+                metadata.is_write_only,
+                metadata.is_rw,
+                metadata.is_complex,
+                metadata.is_continuous,
+                0,
+                String::new(),
+            ),
+            Err(e) => err_result(e),
+        }
     }
 
     /// Gets the capabilities string for a display.
@@ -363,12 +361,10 @@ impl DdcutilService {
             Err(e) => return err_result(e),
         };
 
-        let caps_str = match ddcutil::get_capabilities_string(&handle) {
-            Ok(caps_str) => caps_str,
-            Err(e) => return err_result(e),
-        };
-
-        (caps_str, 0, String::new())
+        match ddcutil::get_capabilities_string(&handle) {
+            Ok(caps_str) => (caps_str, 0, String::new()),
+            Err(e) => err_result(e),
+        }
     }
 
     /// Gets parsed capabilities metadata.
