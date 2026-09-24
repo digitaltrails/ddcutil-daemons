@@ -261,15 +261,48 @@ impl DdcutilService {
         vcp_code: u8,
         flags: u32,
     ) -> (String, String, bool, bool, bool, bool, bool, i32, String) {
-        // TODO: call ddcutil backend
+
+        let err_result = |e: ddcutil::Error| -> (String, String, bool, bool, bool, bool, bool, i32, String) {
+            let code: i32 = e.status_code().try_into().unwrap_or(0);
+            (
+                "Feature".into(),
+                "Description".into(),
+                false,
+                false,
+                true,
+                false,
+                false,
+                code,
+                format!("SetVcp: {}", e),
+            )
+        };
+
+        let dref = match ddcutil::find_display(
+            Option::Some(display_number.into()),
+            Option::Some(edid_txt),
+            flags & EDID_PREFIX_ALLOWED != 0) {
+            Ok(dref) => dref,
+            Err(e) => return err_result(e),
+        };
+
+        let handle = match ddcutil::open_display(dref) {
+            Ok(handle) => handle,
+            Err(e) => return err_result(e),
+        };
+
+        let metadata = match ddcutil::get_vcp_metadata(&handle, vcp_code.into()) {
+            Ok(metadata) => metadata,
+            Err(e) => return err_result(e),
+        };
+
         (
-            "Feature".into(),
-            "Description".into(),
-            false,
-            false,
-            true,
-            false,
-            false,
+            metadata.feature_name,
+            metadata.description,
+            metadata.is_read_only,
+            metadata.is_write_only,
+            metadata.is_rw,
+            metadata.is_complex,
+            metadata.is_continuous,
             0,
             String::new(),
         )
