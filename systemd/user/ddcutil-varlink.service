@@ -1,7 +1,7 @@
 [Unit]
 Description=ddcutil Varlink Service
-Requires=ddcutil.socket
-After=ddcutil.socket
+Requires=ddcutil-varlink.socket
+After=ddcutil-varlink.socket
 
 [Service]
 Type=simple
