@@ -276,7 +276,7 @@ impl DdcutilService {
                     client_context,
                     flags,
                 ).await}).map_err(|e| eprintln!("SetVcp: error on signaling change {}", e));
-                (0, "".to_string())
+                (0, String::new())
             },
             Err(e) => err_result(e),
         }
@@ -344,8 +344,31 @@ impl DdcutilService {
         edid_txt: &str,
         flags: u32,
     ) -> (String, i32, String) {
-        // TODO: call ddcutil backend
-        (String::new(), 0, String::new())
+
+        let err_result = |e: ddcutil::Error| -> (String, i32, String) {
+            let code: i32 = e.status_code().try_into().unwrap_or(0);
+            (String::new(), code, format!("SetVcp: {}", e))
+        };
+
+        let dref = match ddcutil::find_display(
+            Option::Some(display_number.into()),
+            Option::Some(edid_txt),
+            flags & EDID_PREFIX_ALLOWED != 0) {
+            Ok(dref) => dref,
+            Err(e) => return err_result(e),
+        };
+
+        let handle = match ddcutil::open_display(dref) {
+            Ok(handle) => handle,
+            Err(e) => return err_result(e),
+        };
+
+        let caps_str = match ddcutil::get_capabilities_string(&handle) {
+            Ok(caps_str) => caps_str,
+            Err(e) => return err_result(e),
+        };
+
+        (caps_str, 0, String::new())
     }
 
     /// Gets parsed capabilities metadata.
