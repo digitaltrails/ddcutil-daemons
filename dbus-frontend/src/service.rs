@@ -171,8 +171,37 @@ impl DdcutilService {
         vcp_codes: &[u8],
         flags: u32,
     ) -> (Vec<(u8, u16, u16, String)>, i32, String) {
-        // TODO: call ddcutil backend
-        (vec![], 0, String::new())
+
+        let err_result = |e: ddcutil::Error| -> (Vec<(u8, u16, u16, String)>, i32, String) {
+            let code: i32 = e.status_code().try_into().unwrap_or(0);
+            (vec![], code, format!("GetMultipleVcp: {}", e))
+        };
+
+        let dref = match ddcutil::find_display(
+            Option::Some(display_number.into()),
+            Option::Some(edid_txt),
+            flags & EDID_PREFIX_ALLOWED != 0) {
+            Ok(dref) => dref,
+            Err(e) => return err_result(e),
+        };
+
+        let handle = match ddcutil::open_display(dref) {
+            Ok(handle) => handle,
+            Err(e) => return err_result(e),
+        };
+
+        let mut values = Vec::new();
+        for &code in vcp_codes {
+            match ddcutil::get_vcp(&handle, code as u8) {
+                Ok((current, max, formatted)) => {
+                    values.push((code, current as u16, max as u16, formatted));
+                }
+                Err(e) => {
+                    return err_result(e);
+                }
+            }
+        }
+        (values, 0, "".to_string())
     }
 
     /// Sets a VCP value.
@@ -273,7 +302,7 @@ impl DdcutilService {
                 false,
                 false,
                 code,
-                format!("SetVcp: {}", e),
+                format!("GetVcpMetadata: {}", e),
             )
         };
 
