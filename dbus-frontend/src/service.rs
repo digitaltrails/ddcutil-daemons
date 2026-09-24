@@ -1,14 +1,11 @@
 
-use core::option;
 use base64::Engine;
 use base64::engine::general_purpose;
 use ddcutil_backend::ddcutil;
 use std::collections::HashMap;
-use std::fs::canonicalize;
 use log::{error};
 use zbus::interface;
 use zbus::object_server::SignalEmitter;
-use zbus::zvariant::Value::Str;
 
 const DETECT_ALL: u32 = 8;
 const EDID_PREFIX_ALLOWED: u32 = 1;
@@ -481,8 +478,14 @@ impl DdcutilService {
         edid_txt: &str,
         flags: u32,
     ) -> (i32, String) {
-        // TODO: call ddcutil backend
-        (0, String::new())
+        match ddcutil::get_display_state(
+            Option::Some(display_number.into()),
+            Option::Some(edid_txt),
+            flags & EDID_PREFIX_ALLOWED != 0,
+        ) {
+            Ok((status, text)) => (status, text),
+            Err(e) => (e.status_code().try_into().unwrap_or(0), format!("SetVcp: {}", e)),
+        }
     }
 
     /// Gets the current sleep multiplier.

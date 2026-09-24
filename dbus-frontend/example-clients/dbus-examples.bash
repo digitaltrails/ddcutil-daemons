@@ -5,3 +5,4 @@ busctl --user call com.ddcutil.DdcutilService /com/ddcutil/DdcutilObject com.ddc
 busctl --user call com.ddcutil.DdcutilService /com/ddcutil/DdcutilObject com.ddcutil.DdcutilInterface GetVcpMetadata isyu 1 "" 0x10 0
 busctl --user call com.ddcutil.DdcutilService /com/ddcutil/DdcutilObject com.ddcutil.DdcutilInterface GetCapabilitiesString isu 1 ""  0
 busctl --user call com.ddcutil.DdcutilService /com/ddcutil/DdcutilObject com.ddcutil.DdcutilInterface GetCapabilitiesMetadata isu 1 ""  0
+busctl --user call com.ddcutil.DdcutilService /com/ddcutil/DdcutilObject com.ddcutil.DdcutilInterface GetDisplayState isu 1 ""  0
