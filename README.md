@@ -5,7 +5,17 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 # Ddcutil daemons
 
-Varlink and D-Bus ddcutil daemons for control of DDC Monitors/VDUs. Coded in 
+> [!WARNING]
+> When using these daemons, avoid excessively writing VCP values because each VDU's
+> NVRAM likely has a write-cycle limit/lifespan. The suggested guideline is to limit
+> updates to rates comparable to those observed when using the VDU's onboard controls.
+> Avoid coding that might rapidly or infinitely loop, including when recovering
+> from errors and bugs.
+>
+> Non-standard manufacturer specific features should only be experimented with caution,
+> some may have irreversible consequences, including bricking the hardware.
+
+Varlink and D-Bus ddcutil daemons for control of DDC Monitors/VDUs. They are coded in 
 Rust using varlink-crate and zbus-crate.
 
 __ddcutil-varlink__
@@ -19,14 +29,9 @@ is installed with the correct privileges, the daemons need no additional
 privileges.  It's not recommended to run them as system level daemons, they
 have never been tested in system space. 
 
-> [!WARNING]
-> When using these services, avoid excessively writing VCP values because each VDU's NVRAM likely has a write-cycle limit/lifespan. The suggested guideline is to limit updates to rates comparable to those observed when using the VDU's onboard controls. Avoid coding that might rapidly or infinitely loop, including when recovering from errors and bugs.
->
-> Non-standard manufacturer specific features should only be experimented with caution, some may have irreversible consequences, including bricking the hardware.
-
-> [!WARNING]
-> The dbus-frontend is still work in progress, only some methods have been implemented, 
-> most calls are stubbed.
+The aim of these services is to make it easier to create highly-responsive widgets
+and apps for [ddcutil](https://www.ddcutil.com/).   These services are based on [ddcutil-service](https://github.com/digitaltrails/ddcutil-service), a
+similar C-coded D-Bus service.
 
 > [!Tip]
 > All methods in [com.ddcutil.service.varlink](varlink-frontend/varlink/com.ddcutil.service.varlink) 
@@ -39,14 +44,16 @@ have never been tested in system space.
 > - Packaging, probably initially targeting openSUSE Tumbleweed.
 > - Replace varlink-crate by zlink-crate when zlink-crate reaches 1.0.
 
-The aim of these services is to make it easier to create highly-responsive widgets 
-and apps for [ddcutil](https://www.ddcutil.com/).   These services are based on [ddcutil-service](https://github.com/digitaltrails/ddcutil-service), a 
-similar C-coded D-Bus service.
 
-The services are written in Rust.   Compared to other implementations of similar 
-services, the code is quite compact and the abstractions 
-are relatively shallow. Providing you know Rust and a little about [varlink](https://varlink.org/)
-or D-Bus, the code should be quite easy to follow.  
+> [!WARNING]
+> The dbus-frontend is still work in progress. Only some methods have been implemented.
+> Notably, `Detect`, `GetVcp`, `GetMultipleVcp` and `SetVcp` have been implemented 
+> and are fully functional.  Many other methods and properties are stubbed to
+> return dummy results.
+
+An attempt has been made to keep the code compact and the abstractions relatively
+shallow. Providing you know Rust and a little about [varlink](https://varlink.org/) or D-Bus, the
+code should be quite easy to follow.  
 
 # Building the daemons
 
@@ -61,8 +68,10 @@ cargo build --release --package ddcutil-backend
 cargo build --release --bin ddcutil-varlink
 cargo build --release --bin ddcutil-dbus
 
-# Normally the release binaries wind up here:
-ls -l ./target/release/
+# Normally the release binaries wind up in $HOME/.cargo/bin:
+ls -1 $HOME/.cargo/bin/ddcutil-*
+.../.cargo/bin/ddcutil-dbus
+.../.cargo/bin/ddcutil-varlink
 ```
 
 ## Installation of the executables
