@@ -65,9 +65,11 @@ type Event (
 
 # Optional method flags.
 # Not all flags are meaningful for all methods.
+#    allow_edid_prefix: Allow EDID prefix matches. If prefix not unique, first match wins.
+#    no_verify: Request libddcutil not to verify the set_vcp worked.
 type CallOptions (
-    allow_edid_prefix: ?bool,     # Allow EDID prefix matches. If prefix not unique, first match wins.
-    no_verify: ?bool              # Request libddcutil not to verify the set_vcp worked.
+    allow_edid_prefix: ?bool,
+    no_verify: ?bool
 )
 
 # Detect may be able to detect offline/powered-off displays if connected by DVI,
