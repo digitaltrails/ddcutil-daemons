@@ -6,12 +6,12 @@ SPDX-License-Identifier: GPL-2.0-or-later
 # Ddcutil daemons
 
 Varlink and D-Bus ddcutil daemons for control of DDC Monitors/VDUs. Coded in 
-Rust using varlink-crate and zbus-crate.  Two daemons are included:
+Rust using varlink-crate and zbus-crate.
 
-ddcutil-varlink
+__ddcutil-varlink__
 : A varlink implementation of [com.ddcutil.service.varlink](varlink-frontend/varlink/com.ddcutil.service.varlink).
 
-ddcutil-dbus
+__ddcutil-dbus__
 : A D-Bus implementation compatible with the C coded [ddcutil-service](https://github.com/digitaltrails/ddcutil-service).
 
 The daemons are designed to run as userspace daemons. Providing libddcutil 
