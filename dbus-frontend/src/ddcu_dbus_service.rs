@@ -1,4 +1,11 @@
+// SPDX-FileCopyrightText: 2026 Contributors to ddcutil-varlink <https://github.com/digitaltrails/ddcutil-varlink>
+// SPDX-License-Identifier: GPL-2.0-or-later
+
 //! D-Bus interface to libddcutil.
+//! 
+//! The name Ddcu is an internal naming convention, deliberately
+//! different from ddcutil to help with delimiting internal code
+//! boundaries.
 
 use base64::Engine;
 use base64::engine::general_purpose;

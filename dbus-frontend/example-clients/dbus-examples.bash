@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 Contributors to ddcutil-varlink <https://github.com/digitaltrails/ddcutil-varlink>
+# SPDX-License-Identifier: GPL-2.0-or-later
 busctl --user call com.ddcutil.DdcutilService /com/ddcutil/DdcutilObject com.ddcutil.DdcutilInterface SetVcp isyqu 1 "" 0x10  90  0
 busctl --user call com.ddcutil.DdcutilService /com/ddcutil/DdcutilObject com.ddcutil.DdcutilInterface SetVcpWithContext isyqsu 1 "" 0x10  60 "my_app" 0
 busctl --user call com.ddcutil.DdcutilService /com/ddcutil/DdcutilObject com.ddcutil.DdcutilInterface GetVcp isyu 1 "" 0x10 0
