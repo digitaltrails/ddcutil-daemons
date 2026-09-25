@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2026 Contributors to ddcutil-varlink <https://github.com/digitaltrails/ddcutil-varlink>
+// SPDX-FileCopyrightText: 2026 Contributors to ddcutil-daemons <https://github.com/digitaltrails/ddcutil-daemons>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 //! # ddcutil-varlink
@@ -11,8 +11,8 @@
 //!    the socket set by systemd (assumed to be on fd 3).
 //! 2. If the environment variable `XDG_RUNTIME_DIR` is set,
 //!
-//!    use `unix:$XDG_RUNTIME_DIR/ddcutil-varlink.socket`,
-//! 3. Fallback to `/tmp/ddcutil-varlink.socket`.
+//!    use `unix:$XDG_RUNTIME_DIR/ddcutil-daemons.socket`,
+//! 3. Fallback to `/tmp/ddcutil-daemons.socket`.
 
 use log::{error, info, warn};
 use std::os::unix::net::UnixListener;
@@ -80,12 +80,12 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         "com.ddcutil",
         "ddcutil-varlink",
         "1.0.0",
-        "https://github.com/digitaltrails/ddcutil-varlink",
+        "https://github.com/digitaltrails/ddcutil-daemons",
         vec![Box::new(interface)],
     );
 
     // Check for systemd Socket Activation (LISTEN_FDS environment variable)
-    // Will most likely be bound to unix:$XDG_RUNTIME_DIR/ddcutil-varlink.socket
+    // Will most likely be bound to unix:$XDG_RUNTIME_DIR/ddcutil-daemons.socket
     if let Ok(fds) = std::env::var("LISTEN_FDS") {
         // Systemd handles binding the file descriptor for us.
         // We pass an empty/dummy address string because varlink crate
@@ -117,10 +117,10 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         // Dynamically build the path using XDG_RUNTIME_DIR safely
 
         // Determine socket address
-        // Default to unix:$XDG_RUNTIME_DIR/ddcutil-varlink.socket or /tmp/ddcutil-varlink.socket
+        // Default to unix:$XDG_RUNTIME_DIR/ddcutil-daemons.socket or /tmp/ddcutil-daemons.socket
         // if XDG_RUNTIME_DIR isn't set.
         let runtime_dir = std::env::var("XDG_RUNTIME_DIR").unwrap_or_else(|_| "/tmp".to_owned());
-        let socket_address = format!("unix:{}/ddcutil-varlink.socket", runtime_dir);
+        let socket_address = format!("unix:{}/ddcutil-daemons.socket", runtime_dir);
 
         warn!("LISTEN_FDS is not set. Running in manual mode.");
         info!("Listening on socket: {}", socket_address);
