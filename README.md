@@ -19,7 +19,7 @@ Varlink and D-Bus ddcutil daemons for control of DDC Monitors/VDUs. They are cod
 Rust using varlink-crate and zbus-crate.
 
 __ddcutil-varlink__
-: A varlink implementation of [com.ddcutil.service.varlink](varlink-frontend/varlink/com.ddcutil.service.varlink).
+: A varlink implementation of [com.ddcutil.service.varlink](ddcutil-varlink/varlink/com.ddcutil.service.varlink).
 
 __ddcutil-dbus__
 : A D-Bus implementation compatible with the C coded [ddcutil-service](https://github.com/digitaltrails/ddcutil-service).
@@ -34,7 +34,7 @@ and apps for [ddcutil](https://www.ddcutil.com/).   These services are based on 
 similar C-coded D-Bus service.
 
 > [!Tip]
-> All methods in [com.ddcutil.service.varlink](varlink-frontend/varlink/com.ddcutil.service.varlink) 
+> All methods in [com.ddcutil.service.varlink](ddcutil-varlink/varlink/com.ddcutil.service.varlink) 
 > have now been implemented.
 > 
 > The [vdu_controls](https://digitaltrails.github.io/vdu_controls/), a control panel for 
@@ -182,7 +182,7 @@ the executable to somewhere like `/usr/bin` or `/usr/local/bin`.
 The GUI [vdu_controls](https://digitaltrails.github.io/vdu_controls/) can optionally use ddcutil-varlink as
 its ddcutil interface.
 
-The project's [example-clients](varlink-frontend/example-clients) 
+The project's [example-clients](ddcutil-varlink/example-clients) 
 directory contains some example clients.
 
 ## Rust varlink implementations
