@@ -99,7 +99,7 @@ cargo install --path ddc-ci-sbus
 # The above normally installs to $HOME/.cargo/bin
 ls -l $HOME/.cargo/bin
 ```
-But you can copy these or the target directory outputs to anywhere
+These or the target directory outputs can be copied to anywhere
 appropriate.
 
 # Using the ddc-ci-varlink daemon
