@@ -22,25 +22,30 @@ SPDX-License-Identifier: GPL-2.0-or-later
 > Non-standard manufacturer specific features should only be experimented with caution,
 > some may have irreversible consequences, including bricking the hardware.
 
-Varlink and D-Bus DDC-CI daemons for control of DDC Monitors/VDUs. The
-daemons are coded in Rust using varlink-crate and zbus-crate.  They both use
-a common Rust backend that wraps [libddcutil](https://www.ddcutil.com/), a C-library 
-that robustly supports numerous OEM DDC implementations and GPU drivers.
+DDC-CI-daemons is a project that implements Varlink and D-Bus DDC-CI daemons for control of 
+displays/monitors/VDUs:
+
 
 __ddc-ci-varlink__
-: A varlink implementation of [local.ddc-ci.service.varlink](ddc-ci-varlink/varlink/local.ddc-ci.service.varlink).
+: A varlink service that implements the interfaces specified by [local.ddc-ci.service.varlink](ddc-ci-varlink/varlink/local.ddc-ci.service.varlink).
 
 __ddc-ci-dbus__
 : A D-Bus implementation compatible with the C coded [ddcutil-service](https://github.com/digitaltrails/ddcutil-service).
 
-The daemons are designed to run as userspace daemons. Providing libddcutil 
-is installed with the correct privileges, the daemons need no additional 
-privileges.  It's not recommended to run them as system level daemons, they
-have never been tested in system space. 
+The aim of this project is to make it easier to create widgets
+and applications that can alter display/monitor/VDU features such
+as brightness and contrast.  The capabilities of these two daemons are 
+similar to those provided by [ddcutil-service](https://github.com/digitaltrails/ddcutil-service), an older C-coded 
+D-Bus service.
 
-The aim of these services is to make it easier to create highly-responsive widgets
-and apps for [ddcutil](https://www.ddcutil.com/).   These services are based on [ddcutil-service](https://github.com/digitaltrails/ddcutil-service), a
-similar C-coded D-Bus service.
+The project is coded in Rust using varlink-crate and zbus-crate.  The daemons use
+a common Rust backend that wraps [libddcutil](https://www.ddcutil.com/), a C-library 
+that robustly supports numerous OEM DDC implementations and GPU drivers.
+
+The daemons are designed to run as user session-bus services. Providing libddcutil 
+is installed with the correct privileges, the daemons need no additional 
+privileges.  It's not recommended to run them as system-bus services, they
+have never been tested in system space. 
 
 > [!Tip]
 > All methods in [local.ddc-ci.service.varlink](ddc-ci-varlink/varlink/local.ddc-ci.service.varlink) 
@@ -49,13 +54,14 @@ similar C-coded D-Bus service.
 > The [vdu_controls](https://digitaltrails.github.io/vdu_controls/), a control panel for 
 > displays, can be configured to use ddc-ci-varlink.
 >
-> Varlink development is more or less complete at this point.  Possible future work:
+> ddc-ci-Varlink development is more or less complete at this point.  Possible 
+> future work:
 > - Packaging, probably initially targeting openSUSE Tumbleweed.
 > - Replace varlink-crate by zlink-crate when zlink-crate reaches 1.0.
 
 
 > [!WARNING]
-> The dbus-frontend is still work in progress. Only some methods have been implemented.
+> The ddc-ci-dbus is still a work in progress. 
 > Notably, `Detect`, `GetVcp`, `GetMultipleVcp` and `SetVcp` have been implemented 
 > and are fully functional.  Many other methods and properties are stubbed to
 > return dummy results.
