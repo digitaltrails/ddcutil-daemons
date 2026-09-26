@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: 2026 Contributors to ddc-ci-daemons <https://github.com/digitaltrails/ddc-ci-daemons>
+# SPDX-License-Identifier: GPL-2.0-or-later
+[Unit]
+Description=DDC CI Varlink Service
+Requires=ddc-ci-varlink.socket
+After=ddc-ci-varlink.socket
+
+[Service]
+Type=simple
+ExecStart=%h/.cargo/bin/ddc-ci-varlink
+Environment=RUST_LOG=info
+
+[Install]
+WantedBy=default.target

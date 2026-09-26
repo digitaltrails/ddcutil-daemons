@@ -1,11 +1,11 @@
-// SPDX-FileCopyrightText: 2026 Contributors to ddcutil-daemons <https://github.com/digitaltrails/ddcutil-daemons>
+// SPDX-FileCopyrightText: 2026 Contributors to ddc-ci-daemons <https://github.com/digitaltrails/ddc-ci-daemons>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-//! DdcuVarlinkService VarlinkInterface implementation
+//! DdcCiVarlinkService VarlinkInterface implementation
 //!
 
-use crate::com_ddcutil_service::*;
-pub use crate::ddcu_varlink_service::DdcuVarlinkService;
+use crate::local_ddc_ci_service::*;
+pub use crate::ddc_ci_varlink_service::DdcCiVarlinkService;
 use crossbeam_channel::unbounded;
 use log::{error};
 use std::sync::atomic::Ordering;
@@ -14,7 +14,6 @@ use varlink::StringHashMap;
 use ddcutil_backend::ddcutil;
 use ddcutil_backend::ddcutil::{InternalEvent, InternalEventKind, DisplayInfo};
 
-const DDCU_VARLINK_VERSION: &str = "1.0.0";
 
 /// Logs the Varlink call method name and parameters for debugging.
 macro_rules! debug_varlink_call {
@@ -39,7 +38,7 @@ fn to_detect_entry(info: DisplayInfo) -> DetectEntry {
     }
 }
 
-impl VarlinkInterface for DdcuVarlinkService {
+impl VarlinkInterface for DdcCiVarlinkService {
     fn detect(&self, call: &mut dyn Call_Detect, include_offline: bool) -> varlink::Result<()> {
         debug_varlink_call!(call);
         // Acquire the lock once for the entire operation
@@ -203,7 +202,7 @@ impl VarlinkInterface for DdcuVarlinkService {
         call: &mut dyn Call_GetServiceInterfaceVersion,
     ) -> varlink::Result<()> {
         debug_varlink_call!(call);
-        call.reply(DDCU_VARLINK_VERSION.to_owned())
+        call.reply(DdcCiVarlinkService::VERSION.to_string())
     }
 
     fn get_service_poll_cascade_interval(

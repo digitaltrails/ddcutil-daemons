@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2026 Contributors to ddcutil-daemons <https://github.com/digitaltrails/ddcutil-daemons>
+// SPDX-FileCopyrightText: 2026 Contributors to ddc-ci-daemons <https://github.com/digitaltrails/ddc-ci-daemons>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 //! D-Bus interface to libddcutil.
@@ -20,17 +20,24 @@ const EDID_PREFIX_ALLOWED: u32 = 1;
 const NO_VERIFY: u32 = 4;
 
 /// The main service object. Holds all state and (eventually).
-pub struct DdcuDbusService {
+pub struct DdcCiDbusService {
     pub(crate) dynamic_sleep: bool,
     pub(crate) output_level: u32,
 }
 
 // ── Private helpers (not part of the D-Bus interface) ──────────────
-impl DdcuDbusService {
+impl DdcCiDbusService {
     /// Shared body for `detect` and `list_detected`.
     ///
     /// When `force_redetect` is true, a rescan is triggered before listing.
     /// Returns `(status, displays, error_status, error_message)`.
+
+    /// Well-known bus name this service requests.
+    pub const SERVICE_NAME: &'static str = "local.ddc-ci.DdcCiService";
+
+    /// Object path where the interface is served.
+    pub const OBJECT_PATH: &'static str = "/local/ddc_ci/DdcCiObject";
+    
     fn list_displays_impl(
         &self,
         flags: u32,
@@ -142,8 +149,8 @@ impl DdcuDbusService {
     }
 }
 
-#[interface(name = "com.ddcutil.DdcutilInterface")]
-impl DdcuDbusService {
+#[interface(name = "local.ddc_ci.DdcCiInterface")]
+impl DdcCiDbusService {
     // ── Methods ────────────────────────────────────────────────────────
 
     /// Restarts the service.

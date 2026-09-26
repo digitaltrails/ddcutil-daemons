@@ -1,10 +1,10 @@
 # SPDX-FileCopyrightText: 2026 Contributors to ddcutil-varlink <https://github.com/digitaltrails/ddcutil-varlink>
 # SPDX-License-Identifier: GPL-2.0-or-later
 [Unit]
-Description=ddcutil Varlink Service Socket
+Description=DDC CI Varlink Service Socket
 
 [Socket]
-ListenStream=%t/ddcutil-varlink.socket
+ListenStream=%t/ddc-ci-varlink.socket
 SocketMode=0600
 
 [Install]

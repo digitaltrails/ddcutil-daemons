@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2026 Contributors to ddcutil-daemons <https://github.com/digitaltrails/ddcutil-daemons>
+// SPDX-FileCopyrightText: 2026 Contributors to ddc-ci-daemons <https://github.com/digitaltrails/ddc-ci-daemons>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 //! # ddcutil-varlink
@@ -11,26 +11,26 @@
 //!    the socket set by systemd (assumed to be on fd 3).
 //! 2. If the environment variable `XDG_RUNTIME_DIR` is set,
 //!
-//!    use `unix:$XDG_RUNTIME_DIR/ddcutil-daemons.socket`,
-//! 3. Fallback to `/tmp/ddcutil-daemons.socket`.
+//!    use `unix:$XDG_RUNTIME_DIR/ddc-ci-varlink.socket`,
+//! 3. Fallback to `/tmp/ddc-ci-varlink.socket`.
 
 use log::{error, info, warn};
 use std::os::unix::net::UnixListener;
 use std::os::unix::io::FromRawFd;
 use varlink::*;
 
-use ddcu_varlink_impl::DdcuVarlinkService;
+use ddc_ci_varlink_impl::DdcCiVarlinkService;
 
 // Our varlink generated interface for com_ddcutil_service.
 #[allow(nonstandard_style, dead_code, clippy::all, clippy::nursery)]
-mod com_ddcutil_service {
-    include!(concat!(env!("OUT_DIR"), "/com.ddcutil.service.rs"));
+mod local_ddc_ci_service {
+    include!(concat!(env!("OUT_DIR"), "/local.ddc-ci.service.rs"));
 }
 
 // Our modules
-mod ddcu_varlink_service;
-mod ddcu_varlink_subscribers;
-mod ddcu_varlink_impl;
+mod ddc_ci_varlink_service;
+mod ddc_ci_varlink_subscribers;
+mod ddc_ci_varlink_impl;
 
 /// Start the service on its unix socket.
 ///
@@ -66,31 +66,30 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     // module which converts them to external varlink events and dispatches them to
     // external subscribers.
     let (service_implementation,
-        internal_event_receiver) = DdcuVarlinkService::new();
+        internal_event_receiver) = DdcCiVarlinkService::new();
 
     // Spawn thread to forward ddcutil events to Varlink subscribers
     std::thread::spawn(move || {
         // This will loop reading events and forwarding to varlink subscribers
-        ddcu_varlink_subscribers::forward_to_all_subscribers(internal_event_receiver);
+        ddc_ci_varlink_subscribers::forward_to_all_subscribers(internal_event_receiver);
     });
 
     // Build the Varlink interface
-    let interface = com_ddcutil_service::new(Box::new(service_implementation));
+    let interface = local_ddc_ci_service::new(Box::new(service_implementation));
     let varlink_service = VarlinkService::new(
-        "com.ddcutil",
-        "ddcutil-varlink",
-        "1.0.0",
-        "https://github.com/digitaltrails/ddcutil-daemons",
+        DdcCiVarlinkService::VENDOR,
+        DdcCiVarlinkService::PRODUCT,
+        DdcCiVarlinkService::VERSION,
+        DdcCiVarlinkService::PRODUCT_URL,
         vec![Box::new(interface)],
     );
 
     // Check for systemd Socket Activation (LISTEN_FDS environment variable)
-    // Will most likely be bound to unix:$XDG_RUNTIME_DIR/ddcutil-daemons.socket
+    // Will most likely be bound to unix:$XDG_RUNTIME_DIR/ddc-ci-varlink.socket
     if let Ok(fds) = std::env::var("LISTEN_FDS") {
         // Systemd handles binding the file descriptor for us.
         // We pass an empty/dummy address string because varlink crate
         // automatically prioritizes the systemd FD when LISTEN_FDS exists.
-
 
         // SAFETY: We assume fd 3 is a valid socket passed by systemd.
         info!("LISTEN_FDS is set to {}. Activated via systemd. Assuming file descriptor 3.", fds);
@@ -117,10 +116,10 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         // Dynamically build the path using XDG_RUNTIME_DIR safely
 
         // Determine socket address
-        // Default to unix:$XDG_RUNTIME_DIR/ddcutil-daemons.socket or /tmp/ddcutil-daemons.socket
+        // Default to unix:$XDG_RUNTIME_DIR/ddc-ci-varlink.socket or /tmp/ddc-ci-varlink.socket
         // if XDG_RUNTIME_DIR isn't set.
         let runtime_dir = std::env::var("XDG_RUNTIME_DIR").unwrap_or_else(|_| "/tmp".to_owned());
-        let socket_address = format!("unix:{}/ddcutil-daemons.socket", runtime_dir);
+        let socket_address = format!("unix:{}/{}", runtime_dir, DdcCiVarlinkService::FALLBACK_SOCKET_FILENAME);
 
         warn!("LISTEN_FDS is not set. Running in manual mode.");
         info!("Listening on socket: {}", socket_address);

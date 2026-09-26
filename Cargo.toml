@@ -2,5 +2,5 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 [workspace]
-members = ["ddcutil-backend", "ddcutil-dbus", "ddcutil-varlink"]
+members = ["ddcutil-backend", "ddc-ci-dbus", "ddc-ci-varlink"]
 resolver = "2"

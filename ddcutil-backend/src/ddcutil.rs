@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2026 Contributors to ddcutil-daemons <https://github.com/digitaltrails/ddcutil-daemons>
+// SPDX-FileCopyrightText: 2026 Contributors to ddc-ci-daemons <https://github.com/digitaltrails/ddc-ci-daemons>
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 //! Safe, idiomatic Rust bindings for `libddcutil`.

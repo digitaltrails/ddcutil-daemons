@@ -1,15 +1,15 @@
-# SPDX-FileCopyrightText: 2026 Contributors to ddcutil-varlink <https://github.com/digitaltrails/ddcutil-varlink>
+# SPDX-FileCopyrightText: 2026 Contributors to ddc-ci-daemons <https://github.com/digitaltrails/ddc-ci-daemons>
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 [package]
-name = "ddcutil-varlink"
+name = "ddc-ci-varlink"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 varlink = "13"
 log = "0.4"
-env_logger = "0.10"
+env_logger = "0.11"
 base64 = "0.21"
 serde = "1.0"
 serde_derive = "1.0"

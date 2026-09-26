@@ -1,9 +1,9 @@
-# com.ddcutil.service.varlink
+# local.ddc_ci.varlink
 
 # SPDX-FileCopyrightText: 2026 Contributors to ddcutil-varlink <https://github.com/digitaltrails/ddcutil-varlink>
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-interface com.ddcutil.DdcutilInterface
+interface local.ddc-ci.service
 
 error DisplayNotFound (display_number: int, edid_base64: string)
 error DdcError(display_ref: int, display_number: int, edid_base64: string, vcp_code: int, status: int, message: string)
