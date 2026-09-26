@@ -38,7 +38,7 @@ similar to those provided by [ddcutil-service](https://github.com/digitaltrails/
 D-Bus service.
 
 The project is coded in Rust using varlink-crate and zbus-crate.  The daemons use
-a common Rust backend that wraps [libddcutil](https://www.ddcutil.com/), a C-library 
+a common Rust backend.  The backend wraps [libddcutil](https://www.ddcutil.com/), a C-library 
 that robustly supports numerous OEM DDC implementations and GPU drivers.
 
 The daemons are designed to run as user session-bus services. Providing libddcutil 
