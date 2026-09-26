@@ -11,7 +11,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 > under the official [com.ddutil](https://www.ddcutil.com/) umbrella. All the client 
 > examples have been updated to the new handles. 
 
-> [!WARNING]
+> [!CAUTION]
 > When using these daemons, avoid excessively writing VCP values because each VDU's
 > NVRAM likely has a write-cycle limit/lifespan. The suggested guideline is to limit
 > updates to rates comparable to those observed when using the VDU's onboard controls.
@@ -46,7 +46,7 @@ is installed with the correct privileges, the daemons need no additional
 privileges.  It's not recommended to run them as system-bus services, they
 have never been tested in system space. 
 
-> [!Tip]
+> [!NOTE]
 > All methods in [local.ddc-ci.service.varlink](ddc-ci-varlink/varlink/local.ddc-ci.service.varlink) 
 > have now been implemented.
 > 
