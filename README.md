@@ -6,11 +6,10 @@ SPDX-License-Identifier: GPL-2.0-or-later
 # DDC-CI daemons
 
 > [!IMPORTANT]
-> The project name, executable names, D-Bus handle names and varlink handle names 
-> have recently been changed to properly indicate that this is not a project 
-> under the com.ddutil umbrella. All the client examples have been updated to the 
-> new handles. The project depends on [libddcutil](https://www.ddcutil.com/)
-> for a robust interface to DDC CI.
+> 2026/09/26: The project name, executable names, D-Bus handle names and varlink handle names 
+> have been changed to properly indicate that this is <u>not</u> a project 
+> under the official [com.ddutil](https://www.ddcutil.com/) umbrella. All the client 
+> examples have been updated to the new handles. 
 
 > [!WARNING]
 > When using these daemons, avoid excessively writing VCP values because each VDU's
@@ -32,7 +31,7 @@ __ddc-ci-varlink__
 __ddc-ci-dbus__
 : A D-Bus implementation compatible with the C coded [ddcutil-service](https://github.com/digitaltrails/ddcutil-service).
 
-The aim of this project is to make it easier to create widgets
+This project aims to make it easier to create widgets
 and applications that can alter display/monitor/VDU features such
 as brightness and contrast.  The capabilities of these two daemons are 
 similar to those provided by [ddcutil-service](https://github.com/digitaltrails/ddcutil-service), an older C-coded 
