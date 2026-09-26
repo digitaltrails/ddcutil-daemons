@@ -9,9 +9,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 > The project name, executable names, D-Bus handle names and varlink handle names 
 > have recently been changed to properly indicate that this is not a project 
 > under the com.ddutil umbrella. All the client examples have been updated to the 
-> new handles.
->
-> The project still entirely depends on [libddcutil](https://www.ddcutil.com/)
+> new handles. The project depends on [libddcutil](https://www.ddcutil.com/)
 > for a robust interface to DDC CI.
 
 > [!WARNING]
